@@ -21,3 +21,7 @@ func createSetCommand(params []string) (SetCommand, error) {
 		Value: value,
 	}, nil
 }
+
+func (c SetCommand) GetKey() string {
+	return c.Key
+}

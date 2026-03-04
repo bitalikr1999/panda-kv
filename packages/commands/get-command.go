@@ -12,3 +12,7 @@ func createGetCommand(params []string) (GetCommand, error) {
 		Key: key,
 	}, nil
 }
+
+func (c GetCommand) GetKey() string {
+	return c.Key
+}

@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"bitalikr1999/panda-kv/packages/commands"
 	"bitalikr1999/panda-kv/packages/resp"
+	"bitalikr1999/panda-kv/packages/storage"
 	"bufio"
 	"fmt"
 	"log"
@@ -17,6 +18,12 @@ func Start() {
 	if err != nil {
 		log.Fatal("Error starting listener", err)
 	}
+
+	storage := storage.New(3)
+
+	fmt.Println("Storage created", storage)
+
+	storage.Send(commands.SetCommand{Key: "some ke5"})
 
 	defer listener.Close()
 
@@ -45,7 +52,7 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	if commands.CanCreateCommand(respData) == false {
+	if !commands.CanCreateCommand(respData) {
 		return
 	}
 

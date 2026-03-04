@@ -7,11 +7,17 @@ import (
 	"strings"
 )
 
-type Command interface{}
+type Command interface {
+	GetKey() string
+}
 
 type None struct{}
 
-func CreateCommand(respData data.RespData) (Command, error) {
+func (None) GetKey() string {
+	return "none"
+}
+
+func Create(respData data.RespData) (Command, error) {
 
 	values := respData.Arguments()
 

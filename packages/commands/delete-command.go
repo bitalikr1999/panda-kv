@@ -15,3 +15,7 @@ func createDeleteCommand(params []string) (DeleteCommand, error) {
 
 	return DeleteCommand{Key: key}, nil
 }
+
+func (c DeleteCommand) GetKey() string {
+	return c.Key
+}
