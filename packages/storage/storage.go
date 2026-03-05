@@ -26,18 +26,24 @@ func New(shardsCount int) *Storage {
 
 }
 
-func (s *Storage) Send(command commands.Command) {
+func (s *Storage) Send(command commands.Command) CommandExecuteResponse {
 
 	key := command.GetKey()
 	shard := s.getShard(key)
 
 	fmt.Println("We found shaard!", shard)
 
-	shard.Send(command)
-
+	return shard.Send(command)
 }
+
 func (s *Storage) getShard(key string) *Shard {
 	h := fnv.New32a()
 	h.Write([]byte(key))
 	return &s.shards[h.Sum32()%uint32(len(s.shards))]
+}
+
+func (s *Storage) Close() {
+	for _, shard := range s.shards {
+		shard.Stop()
+	}
 }

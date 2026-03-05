@@ -23,9 +23,12 @@ func Start() {
 
 	fmt.Println("Storage created", storage)
 
-	storage.Send(commands.SetCommand{Key: "some ke5"})
+	response := storage.Send(commands.SetCommand{Key: "some ke5", Value: "Some value"})
+
+	fmt.Println("Response", response)
 
 	defer listener.Close()
+	defer storage.Close()
 
 	for {
 
