@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"bitalikr1999/panda-kv/packages/commands"
 	"bitalikr1999/panda-kv/packages/resp"
+	string_encoder "bitalikr1999/panda-kv/packages/resp/encoders/string"
 	"bitalikr1999/panda-kv/packages/storage"
 	"bufio"
 	"fmt"
@@ -21,12 +22,6 @@ func Start() {
 
 	storage := storage.New(3)
 
-	fmt.Println("Storage created", storage)
-
-	response := storage.Send(commands.SetCommand{Key: "some ke5", Value: "Some value"})
-
-	fmt.Println("Response", response)
-
 	defer listener.Close()
 	defer storage.Close()
 
@@ -38,32 +33,44 @@ func Start() {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, storage)
 
 	}
 
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, storage *storage.Storage) {
 
 	defer conn.Close()
 
-	reader := bufio.NewReader(conn)
+	for {
+		reader := bufio.NewReader(conn)
 
-	respData, err := resp.ParseResp(reader)
-	if err != nil {
-		return
+		respData, err := resp.ParseResp(reader)
+		if err != nil {
+			return
+		}
+
+		if !commands.CanCreateCommand(respData) {
+			return
+		}
+
+		command, err := commands.Create(respData)
+		if err != nil {
+			return
+		}
+
+		response := storage.Send(command)
+
+		fmt.Println(response.Value.Value)
+
+		if response.Ok && response.Value.Value == "" {
+			fmt.Println("asdasd")
+			_, err := conn.Write(string_encoder.EncodeString("OK"))
+			if err != nil {
+				fmt.Println("Some error")
+			}
+		}
 	}
-
-	if !commands.CanCreateCommand(respData) {
-		return
-	}
-
-	command, err := commands.Create(respData)
-	if err != nil {
-		return
-	}
-
-	fmt.Println("Got command", command)
 
 }

@@ -1,6 +1,13 @@
 package main
 
-import "net"
+import (
+	"bitalikr1999/panda-kv/packages/resp"
+	"bitalikr1999/panda-kv/packages/resp/encoders/bulkstring"
+	"bufio"
+	"fmt"
+	"net"
+	"strings"
+)
 
 func main() {
 
@@ -9,9 +16,93 @@ func main() {
 	if err != nil {
 		panic("Errorr")
 	}
+
 	defer conn.Close()
 
-	// cmd := "*2\r\n$3\r\nGET\r\n$4\r\nkey1\r\n"
-	cmd := "*3\r\n$3\r\nSET\r\n$5\r\nmykey\r\n$5\r\nhello\r\n"
-	conn.Write([]byte(cmd))
+	done := make(chan struct{})
+
+	go listener(conn, done)
+
+	cli(conn)
+
+	close(done)
+
+}
+
+func listener(conn net.Conn, done chan struct{}) {
+
+	reader := bufio.NewReader(conn)
+
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			{
+				data, err := resp.ParseResp(reader)
+				if err != nil {
+					select {
+					case <-done:
+						return
+					default:
+						{
+							fmt.Println("Some error", err)
+							conn.Close()
+							return
+						}
+					}
+				}
+				fmt.Println("Data", data)
+			}
+		}
+
+	}
+}
+
+func cli(conn net.Conn) {
+
+	for {
+
+		fmt.Println("Enter a command. GET | SET | DELETE | EXIT")
+		var command string
+
+		fmt.Scanln(&command)
+
+		switch strings.ToUpper(command) {
+		case "EXIT":
+			{
+				return
+			}
+		case "GET":
+			{
+				command, err := readGetCommand()
+				if err != nil {
+					continue
+				}
+				fmt.Println("Command", command)
+				conn.Write(command)
+			}
+
+		case "SET":
+			{
+			}
+		case "DELETE":
+			{
+			}
+		}
+
+	}
+
+}
+
+func readGetCommand() ([]byte, error) {
+
+	var key string
+	fmt.Println("Enter key")
+	_, err := fmt.Scan(&key)
+	if err != nil {
+		return nil, err
+	}
+
+	return bulkstring.EncodeBulkstring("GET " + key)
 }

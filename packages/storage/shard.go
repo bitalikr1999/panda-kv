@@ -75,8 +75,7 @@ func (s *Shard) save(key string, value string) CommandExecuteResponse {
 	s.data[key] = v
 
 	return CommandExecuteResponse{
-		Ok:    true,
-		Value: v,
+		Ok: true,
 	}
 }
 
